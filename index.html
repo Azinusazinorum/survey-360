@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оценка 360°</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    min-height: 100vh;
+    background: #0d0d1a;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(99,55,200,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(245,166,35,0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 48px;
+    max-width: 580px;
+    width: 100%;
+    backdrop-filter: blur(20px);
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    animation: fadeIn 0.4s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tag {
+    display: inline-block;
+    background: rgba(99,55,200,0.25);
+    color: #a78bfa;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    line-height: 1.2;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .subtitle {
+    color: rgba(255,255,255,0.5);
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+
+  .badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .badge {
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: rgba(255,255,255,0.6);
+    font-size: 13px;
+  }
+
+  .btn {
+    background: linear-gradient(135deg, #6337c8, #9b5de5);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.02em;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+  .btn-green {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+  }
+
+  .search-input {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus { border-color: rgba(99,55,200,0.5); }
+  .search-input::placeholder { color: rgba(255,255,255,0.3); }
+
+  .employee-list {
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99,55,200,0.4) transparent;
+  }
+
+  .employee-item {
+    padding: 13px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.85);
+    font-size: 14px;
+    transition: background 0.15s, border-color 0.15s;
+    border: 1px solid transparent;
+    margin-bottom: 4px;
+  }
+
+  .employee-item:hover {
+    background: rgba(99,55,200,0.2);
+    border-color: rgba(99,55,200,0.4);
+  }
+
+  .empty-list {
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+    padding: 32px;
+    font-size: 14px;
+  }
+
+  .progress-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+  }
+
+  .progress-dot {
+    height: 4px;
+    flex: 1;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.1);
+    transition: background 0.3s;
+  }
+
+  .progress-dot.active { background: #F5A623; }
+  .progress-dot.done { background: #6337c8; }
+
+  .q-label {
+    color: rgba(255,255,255,0.35);
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  .q-text {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 28px;
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Stars */
+  .stars {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .star {
+    font-size: 36px;
+    cursor: pointer;
+    color: #2a2a3e;
+    transition: color 0.15s, transform 0.1s;
+    background: none;
+    border: none;
+    padding: 2px;
+    line-height: 1;
+  }
+
+  .star:hover, .star.active { color: #F5A623; }
+  .star:hover { transform: scale(1.2); }
+
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  /* Yes/No */
+  .yesno {
+    display: flex;
+    gap: 12px;
+  }
+
+  .yesno-btn {
+    flex: 1;
+    padding: 18px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.6);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .yesno-btn:hover {
+    border-color: rgba(99,55,200,0.4);
+    background: rgba(99,55,200,0.1);
+  }
+
+  .yesno-btn.selected {
+    border-color: #6337c8;
+    background: rgba(99,55,200,0.3);
+    color: #a78bfa;
+  }
+
+  /* Textarea */
+  .text-input {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    resize: vertical;
+    min-height: 120px;
+    transition: border-color 0.2s;
+  }
+
+  .text-input:focus { border-color: rgba(99,55,200,0.5); }
+  .text-input::placeholder { color: rgba(255,255,255,0.25); }
+
+  .nav-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+  }
+
+  .evaluated-name {
+    color: rgba(255,255,255,0.4);
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .evaluated-name span {
+    color: #a78bfa;
+    font-weight: 600;
+  }
+
+  /* Done screen */
+  .done-icon { font-size: 56px; margin-bottom: 16px; text-align: center; }
+
+  .completed-list {
+    background: rgba(99,55,200,0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+
+  .completed-label {
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .completed-item {
+    color: #a78bfa;
+    font-size: 13px;
+    padding: 3px 0;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .star-value {
+    color: #F5A623;
+    font-size: 14px;
+    margin-left: 8px;
+  }
+
+  @media (max-width: 480px) {
+    .card { padding: 28px 20px; }
+    h1 { font-size: 24px; }
+    .q-text { font-size: 17px; }
+    .star { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- WELCOME -->
+<div class="card screen active" id="screen-welcome">
+  <div class="tag">Оценка 360°</div>
+  <h1>Оцени своих коллег</h1>
+  <p class="subtitle">Анонимный опрос по методологии 360°. Выбери коллегу, ответь на 9 вопросов, затем оцени следующего. Твоё имя нигде не фиксируется.</p>
+  <div class="badges">
+    <span class="badge">🔒 Анонимно</span>
+    <span class="badge">⏱ ~3 мин на человека</span>
+    <span class="badge">👥 38 сотрудников</span>
+  </div>
+  <button class="btn" onclick="showScreen('select')">Начать оценку →</button>
+</div>
+
+<!-- SELECT -->
+<div class="card screen" id="screen-select">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+    <div class="tag">Шаг 1</div>
+    <span id="completed-count" style="color:#a78bfa; font-size:13px;"></span>
+  </div>
+  <h1 style="font-size:24px; margin-bottom:8px;">Кого хочешь оценить?</h1>
+  <p class="subtitle" style="margin-bottom:20px;">Выбери сотрудника из списка</p>
+  <input class="search-input" type="text" placeholder="Поиск по имени..." oninput="filterList(this.value)" id="search-input">
+  <div class="employee-list" id="employee-list"></div>
+  <button class="btn-secondary" onclick="showScreen('welcome')">← Назад</button>
+</div>
+
+<!-- SURVEY -->
+<div class="card screen" id="screen-survey">
+  <div class="evaluated-name">Оцениваешь: <span id="current-name"></span></div>
+  <div class="progress-bar" id="progress-bar"></div>
+  <div class="q-label" id="q-label"></div>
+  <div class="q-text" id="q-text"></div>
+  <div id="q-input"></div>
+  <div class="nav-buttons" id="nav-buttons"></div>
+</div>
+
+<!-- DONE -->
+<div class="card screen" id="screen-done">
+  <div class="done-icon" id="done-icon"></div>
+  <h1 style="text-align:center; font-size:26px; margin-bottom:12px;" id="done-title"></h1>
+  <p class="subtitle" style="text-align:center;" id="done-text"></p>
+  <div class="completed-list" id="completed-list" style="display:none;">
+    <div class="completed-label">Уже оценено:</div>
+    <div id="completed-items"></div>
+  </div>
+  <div style="display:flex; gap:12px; justify-content:center;">
+    <button class="btn" onclick="showScreen('select')">Оценить ещё →</button>
+    <button class="btn-secondary" onclick="showScreen('welcome')">На главную</button>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw16LU_Kr9SQQsPJ3ivk9BdSIBLwdi-4xn-6lrDAcB5WLDd20oab79eMAf2nwFDYxZM/exec";
+
+const EMPLOYEES = [
+  "Маслов Николай Сергеевич",
+  "Султаналиев Максат Дженишбекович",
+  "Шабыралиева Жибек Эрмековна",
+  "Пидгирнер Петра Бруновна",
+  "Жылкибаева Азиза Кудайбергеновна",
+  "Алымкулова Алина Раушан Дайырбековна",
+  "Абдылдаев Арстанбек Акылбекович",
+  "Боцман Наталья Владимировна",
+  "Давыдов Богдан Николаевич",
+  "Животкова Кристина Игорьевна",
+  "Наргизов Адилет Наргизович",
+  "Ниязбекова Бегайым Ниязбековна",
+  "Сеитмаметов Салман Канатбекович",
+  "Сулайманов Эрлик Эрнисович",
+  "Хван Алексей Юрьевич",
+  "Усеинбекова Санаят Санжарбековна",
+  "Нурланова Айсулуу Нурлановна",
+  "Ишенбеков Эржан Айбекович",
+  "Исакова Адинай Абдукамаловна",
+  "Усенкулова Перизат Усенкуловна",
+  "Кубанычова Балнур Руслановна",
+  "Сапарбаев Адилет Мамасыдыкович",
+  "Байзакова Малика Азизбековна",
+  "Назаров Даниэл Эркинович",
+  "Ашыракманова Каныкей Доолотбековна",
+  "Муктарканова Гулзат Талантбековна",
+  "Бактыбеков Байаман Бактыбекович",
+  "Шекербеков Бексултан Эмирбекович",
+  "Орозова Дарига Бакытбековна",
+  "Русалиев Рустам Талайбекович",
+  "Карымшаков Данияр Муратбекович",
+  "Даутова Хадижа Алмазбековна",
+  "Курамаева Галия Бактыяровна",
+  "Аликенова Айзирек Кубанычбековна",
+  "Бейшеналиева Алия",
+  "Эльдар",
+  "Кадыралиева Нурайым",
+  "Камбарбеков Азамат Шайырбекович"
+];
+
+const QUESTIONS = [
+  { id: "q1", type: "scale", text: "Насколько качественно сотрудник выполняет свою работу?" },
+  { id: "q2", type: "scale", text: "Насколько сотрудник готов помогать коллегам?" },
+  { id: "q3", type: "scale", text: "Насколько он/она открыт к обратной связи и критике?" },
+  { id: "q4", type: "scale", text: "Насколько сотрудник соблюдает дедлайны и договорённости?" },
+  { id: "q5", type: "scale", text: "Насколько он/она проявляет инициативу?" },
+  { id: "q6", type: "yesno", text: "Готовы ли вы обратиться к этому сотруднику за советом?" },
+  { id: "q7", type: "yesno", text: "Считаете ли вы, что этот сотрудник подходит для своей роли?" },
+  { id: "q8", type: "text", text: "Что у этого сотрудника получается особенно хорошо?" },
+  { id: "q9", type: "text", text: "Что, на ваш взгляд, ему/ей стоит улучшить?" }
+];
+
+let state = {
+  selectedEmployee: null,
+  answers: {},
+  currentQ: 0,
+  completed: [],
+  hovered: 0
+};
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'select') renderList('');
+}
+
+function renderList(filter) {
+  const list = document.getElementById('employee-list');
+  const search = document.getElementById('search-input');
+  if (search) search.value = filter;
+
+  const filtered = EMPLOYEES.filter(e =>
+    e.toLowerCase().includes(filter.toLowerCase()) && !state.completed.includes(e)
+  );
+
+  const count = document.getElementById('completed-count');
+  if (count) count.textContent = state.completed.length > 0 ? ✓ Оценено: ${state.completed.length} : '';
+
+  if (filtered.length === 0) {
+    list.innerHTML = <div class="empty-list">${state.completed.length === EMPLOYEES.length ? 'Вы оценили всех сотрудников 🎉' : 'Никого не найдено'}</div>;
+    return;
+  }
+
+  list.innerHTML = filtered.map(name =>
+    <div class="employee-item" onclick="selectEmployee('${name.replace(/'/g, "\\'")}')">${name}</div>
+  ).join('');
+}
+
+function filterList(val) {
+  renderList(val);
+}
+
+function selectEmployee(name) {
+  state.selectedEmployee = name;
+  state.answers = {};
+  state.currentQ = 0;
+  QUESTIONS.forEach(q => {
+    state.answers[q.id] = q.type === 'scale' ? 0 : q.type === 'yesno' ? null : '';
+  });
+  showScreen('survey');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.currentQ];
+  const total = QUESTIONS.length;
+
+  document.getElementById('current-name').textContent = state.selectedEmployee;
+  document.getElementById('q-label').textContent = Вопрос ${state.currentQ + 1} из ${total};
+  document.getElementById('q-text').textContent = q.text;
+
+  // Progress
+  const pb = document.getElementById('progress-bar');
+  pb.innerHTML = QUESTIONS.map((_, i) => {
+    let cls = '';
+    if (i < state.currentQ) cls = 'done';
+    else if (i === state.currentQ) cls = 'active';
+    return <div class="progress-dot ${cls}"></div>;
+  }).join('');
+
+  // Input
+  const inp = document.getElementById('q-input');
+
+  if (q.type === 'scale') {
+    const val = state.answers[q.id];
+    inp.innerHTML = `
+      <div class="stars" id="stars-row">
+        ${[1,2,3,4,5].map(i => `
+          <button class="star ${val >= i ? 'active' : ''}" 
+            onmouseover="hoverStar(${i})" 
+            onmouseout="hoverStar(0)"
+            onclick="setStar(${i})">★</button>
+        `).join('')}
+        ${val > 0 ? <span class="star-value">${val} / 5</span> : ''}
+      </div>
+      <div class="scale-labels"><span>Слабо</span><span>Отлично</span></div>
+    `;
+  } else if (q.type === 'yesno') {
+    const val = state.answers[q.id];
+    inp.innerHTML = `
+      <div class="yesno">
+        <button class="yesno-btn ${val === 'Да' ? 'selected' : ''}" onclick="setYesNo('Да')">👍 Да</button>
+        <button class="yesno-btn ${val === 'Нет' ? 'selected' : ''}" onclick="setYesNo('Нет')">👎 Нет</button>
+      </div>
+    `;
+  } else {
+    inp.innerHTML = `
+      <textarea class="text-input" placeholder="Напиши свои мысли... (необязательно)"
+        oninput="setText(this.value)">${state.answers[q.id]}</textarea>
+    `;
+  }
+
+  // Nav
+  const nav = document.getElementById('nav-buttons');
+  const canNext = isAnswered();
+  const isLast = state.currentQ === QUESTIONS.length - 1;
+
+  nav.innerHTML = `
+    ${state.currentQ > 0 ? <button class="btn-secondary" onclick="prevQ()">← Назад</button> : ''}
+    ${isLast
+      ? <button class="btn btn-green" onclick="submitSurvey()">✓ Отправить оценку</button>
+      : <button class="btn" onclick="nextQ()" ${canNext ? '' : 'disabled'} style="opacity:${canNext ? 1 : 0.4}">Далее →</button>
+    }
+  `;
+}
+
+function hoverStar(n) {
+  const stars = document.querySelectorAll('.star');
+  stars.forEach((s, i) => {
+    if (n > 0) {
+      s.style.color = i < n ? '#F5A623' : '#2a2a3e';
+    } else {
+      const val = state.answers[QUESTIONS[state.currentQ].id];
+      s.style.color = i < val ? '#F5A623' : '#2a2a3e';
+    }
+  });
+}
+
+function setStar(val) {
+  state.answers[QUESTIONS[state.currentQ].id] = val;
+  renderQuestion();
+}
+
+function setYesNo(val) {
+  state.answers[QUESTIONS[state.currentQ].id] = val;
+  renderQuestion();
+}
+
+function setText(val) {
+  state.answers[QUESTIONS[state.currentQ].id] = val;
+}
+
+function isAnswered() {
+  const q = QUESTIONS[state.currentQ];
+  const a = state.answers[q.id];
+  if (q.type === 'scale') return a > 0;
+  if (q.type === 'yesno') return a !== null;
+  return true;
+}
+
+function nextQ() {
+  if (!isAnswered()) return;
+  state.currentQ++;
+  renderQuestion();
+}
+
+function prevQ() {
+  state.currentQ--;
+  renderQuestion();
+}
+
+async function submitSurvey() {
+  const btn = document.querySelector('.btn-green');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем...'; }
+
+  const row = { timestamp: new Date().toISOString(), evaluated: state.selectedEmployee };
+  QUESTIONS.forEach(q => { row[q.text] = state.answers[q.id]; });
+
+  let ok = false;
+  try {
+    await new Promise((resolve) => {
+      const callbackName = 'cb_' + Date.now();
+      window[callbackName] = function() {
+        delete window[callbackName];
+        if (document.body.contains(script)) document.body.removeChild(script);
+        resolve();
+      };
+      const script = document.createElement('script');
+      script.src = SCRIPT_URL + '?callback=' + callbackName + '&data=' + encodeURIComponent(JSON.stringify(row));
+      script.onerror = () => { resolve(); };
+      document.body.appendChild(script);
+      setTimeout(() => { resolve(); }, 6000);
+    });
+    ok = true;
+  } catch(e) {
+    ok = false;
+  }
+
+  if (ok) state.completed.push(state.selectedEmployee);
+
+  // Done screen
+  document.getElementById('done-icon').textContent = ok ? '✅' : '⚠️';
+  document.getElementById('done-title').textContent = ok ? 'Оценка отправлена!' : 'Ошибка отправки';
+  document.getElementById('done-text').textContent = ok
+    ? Ты оценил ${state.selectedEmployee}. Хочешь оценить ещё кого-то?
+    : 'Не удалось сохранить ответы. Проверь настройки Google Sheets.';
+
+  if (state.completed.length > 0) {
+    const cl = document.getElementById('completed-list');
+    cl.style.display = 'block';
+    document.getElementById('completed-items').innerHTML =
+      state.completed.map(n => <div class="completed-item">✓ ${n}</div>).join('');
+  }
+
+  showScreen('done');
+}
+
+// Init
+renderList('');
+</script>
+</body>
+</html>
